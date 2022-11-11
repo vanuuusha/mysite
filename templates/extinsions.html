@@ -6,8 +6,11 @@
 </head>
 <body>
     <form action="/extinsion" method="post">
-        <input type="text" placeholder="Enter your SQL request">
+        <input type="text" name="text" placeholder="Enter your SQL request">
         <button type="submit">Submit</button>
     </form>
+    {% if data %}
+        {{ data }}
+    {% endif %}
 </body>
 </html>
