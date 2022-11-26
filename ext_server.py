@@ -5,11 +5,14 @@ from flask_cors import CORS
 from flask_restful import Resource, Api
 
 from db_config import host, user, password, db_name
-from queries.ext_query import insert_query, check_in_user_agent, create_new_note, create_new_ext_user
+from queries.ext_query import insert_query, check_in_user_agent, create_new_note, create_new_ext_user, user_have_dataset
 
 app = Flask(__name__)
 CORS(app)
 api = Api()
+
+COUNT_NOTE = 15000
+COUNT_CHECKS = 5
 
 
 @app.before_request
@@ -29,7 +32,13 @@ class ExtBlock(Resource):
     def post(self): # блокировочка
         data = json.loads(request.data)
         user_agent = data.pop('userAgent')
-        ret = {'block': False}
+        with g.conn_db.cursor() as cursor:
+            cursor.execute(check_in_user_agent, (user_agent,))  # если ли уже такой пользователь
+            user_id = cursor.fetchone()
+            cursor.execute(user_have_dataset, (user_id,))
+            res = cursor.fetchone()
+            res = res[0] // (COUNT_NOTE / COUNT_CHECKS)
+        ret = {'block': False, 'count_checks': res}
         return ret, 200
 
 
@@ -72,7 +81,10 @@ class Extension(Resource):
             cursor.execute(check_in_user_agent, (user_agent,))  # если ли уже такой пользователь
             user_id = cursor.fetchone()
             if user_id:
-                ret['checked'] = True
+                cursor.execute(user_have_dataset, (user_id,))
+                res = cursor.fetchone()
+                if res[0] > COUNT_NOTE:
+                    ret['checked'] = True # пока просто на сбор датасета
         return ret, 200
 
 

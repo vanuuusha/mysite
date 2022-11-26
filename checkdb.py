@@ -2,7 +2,7 @@ import psycopg2
 from db_config import host, user, password, db_name
 
 query = """
-SELECT * FROM Note;
+SELECT COUNT(*) FROM Note;
 """
 
 query_2 = """
