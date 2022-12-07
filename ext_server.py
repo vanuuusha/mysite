@@ -3,7 +3,7 @@ import psycopg2
 from flask import Flask, request, render_template, g
 from flask_cors import CORS
 from flask_restful import Resource, Api
-
+from data_preprocessing import preprocess_data
 from db_config import host, user, password, db_name
 from queries.ext_query import insert_query, check_in_user_agent, create_new_note, create_new_ext_user, user_have_dataset
 
@@ -58,18 +58,19 @@ class Extension(Resource):
         except Exception:
             return {}, 200
         user_agent = data.pop('userAgent')
-        hostname = data.pop('host')
+        max_x = data.pop('x')
+        max_y = data.pop('y')
         if not data:
             return {}, 200
         with g.conn_db.cursor() as cursor:
             cursor.execute(check_in_user_agent, (user_agent,))  # если ли уже такой пользователь
             user_id = cursor.fetchone()
             if not user_id:
-                cursor.execute(create_new_ext_user, [user_agent])
+                cursor.execute(create_new_ext_user, [user_agent, max_x, max_y])
                 cursor.execute(check_in_user_agent, [user_agent])
                 user_id = cursor.fetchone()
             user_id = user_id[0]
-            data = [(i['X'], i['Y'], i['timestamp'], user_id, hostname) for i in data.values()]
+            data = [(i['X'], i['Y'], i['timestamp'], user_id, i['url']) for i in data.values()]
             cursor.executemany(create_new_note, data)
         return {}, 200
 
@@ -85,6 +86,9 @@ class Extension(Resource):
                 res = cursor.fetchone()
                 if res[0] > COUNT_NOTE:
                     ret['checked'] = True # пока просто на сбор датасета
+                    # сюда вставить запуск юпитер ноутбука по подготовке данных
+                    # TODO встроить проверку есть ли уже таблица на этого польщователя
+                    preprocess_data(user_id)
         return ret, 200
 
 

@@ -6,11 +6,11 @@ create_table_for_req_extinsion = """
 """
 
 create_table_user_and_id = """
-    CREATE TABLE IF NOT EXISTS user_agent_to_user_id (USERID SERIAL PRIMARY KEY, USER_AGENT TEXT);
+    CREATE TABLE IF NOT EXISTS user_agent_to_user_id (USERID SERIAL PRIMARY KEY, USER_AGENT TEXT, MAX_X INTEGER, MAX_Y INTEGER);
 """
 
 create_table_dataset_of_mouse = """
-    CREATE TABLE IF NOT EXISTS Note (ID SERIAL PRIMARY KEY, X INTEGER, Y INTEGER, SEASSION_timestamp INTEGER, USERID INTEGER REFERENCES user_agent_to_user_id (USERID) ON DELETE CASCADE, hostname TEXT);
+    CREATE TABLE IF NOT EXISTS Note (ID SERIAL PRIMARY KEY, X INTEGER, Y INTEGER, SEASSION_timestamp INTEGER, USERID INTEGER REFERENCES user_agent_to_user_id (USERID) ON DELETE CASCADE, url TEXT);
 """
 
 drop_table_note = """
