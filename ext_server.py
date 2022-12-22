@@ -7,6 +7,7 @@ from data_preprocessing import preprocess_data
 from db_config import host, user, password, db_name
 from queries.ext_query import insert_query, check_in_user_agent, create_new_note, create_new_ext_user, user_have_dataset, check_db_name_by_user, make_dataset_collected_true, get_dataset_for_user_collecte
 from predict import predict
+from flask import jsonify
 
 app = Flask(__name__)
 CORS(app)
@@ -34,7 +35,7 @@ class ExtBlock(Resource):
     def post(self): # блокировочка
         data = json.loads(request.data)
         user_agent = data.pop('userAgent')
-        ret = {'block': False}
+        ret = {'block': True}
         with g.conn_db.cursor() as cursor:
             cursor.execute(check_in_user_agent, (user_agent,))  # если ли уже такой пользователь
             user_id = cursor.fetchone()
@@ -48,9 +49,9 @@ class ExtBlock(Resource):
                 if cursor.fetchone()[0] and (res[0] + ERROR) > NOTE_AT_ONE_TIMER: # на пользователя есть препроцесс + новый датасет, поэтому его можно блокать или нет
                     # TODO тут должны запускаться предсказания по пользователю
                     ret['block'] = predict() # True - заблокать, False - не блокать
-                    delete_query = f"DELETE FROM Note WHERE USERID={user_id[0]}"
+                    # delete_query = f"DELETE FROM Note WHERE USERID={user_id[0]}"
                     # чистим пользователя
-                    cursor.execute(delete_query)
+                    # cursor.execute(delete_query)
 
         ret['count_checks'] = count_checks
         return ret, 200
@@ -125,7 +126,7 @@ def extinsion():
                 data = cursor.fetchall()
             except:
                 data = 'Error'
-        return render_template('extinsions.html', context={data: data})
+        return jsonify(data)
 
 
 api.add_resource(Extension, '/extinsion/api')
